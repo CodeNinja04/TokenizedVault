@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.4;
 
 interface IERC20Lib {
   //function initialize(address owner_, string memory name_, string memory symbol_, uint256 totalSupply_) external;

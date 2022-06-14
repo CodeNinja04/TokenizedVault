@@ -1,11 +1,22 @@
 {
-  "name": "hardhat-project",
+  "name": "tokenizedvault",
+  "scripts": {
+     "lint": "solhint --max-warnings 0 \"contracts/**/*.sol\""
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "chai": "^4.2.0",
     "ethereum-waffle": "^3.0.0",
     "ethers": "^5.0.0",
-    "hardhat": "^2.9.6"
-  }
+    "hardhat": "^2.9.9"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.6.0"
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/CodeNinja04/TokenizedVault.git",
+  "author": "CodeNinja04 <hemendrasharma2019@gmail.com>",
+  "license": "MIT"
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
@@ -17,7 +17,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
-contract factory is ReentrancyGuard {
+contract Factory is ReentrancyGuard {
     using SafeERC20 for ERC20Lib;
     using SafeERC20 for ERC20;
     using FixedPointMathLib for uint256;
@@ -35,6 +35,13 @@ contract factory is ReentrancyGuard {
     mapping(uint256 => address) public getVault;
 
     address[] public allVaults;
+
+    event VaultCreated(
+        address indexed addr,
+        address indexed asset,
+        string name,
+        string symbol
+    );
 
     event Depositvault(
         address indexed caller,
@@ -61,6 +68,8 @@ contract factory is ReentrancyGuard {
         getVault[pid.current()] = clone;
         pid.increment();
         allVaults.push(clone);
+
+        emit VaultCreated(clone,address(_asset),name,symbol);
 
         return clone;
     }
