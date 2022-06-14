@@ -49,6 +49,22 @@ contract Factory is ReentrancyGuard {
         uint256 assets
     );
 
+    event WithdrawVault(
+        uint256 _amount,
+        address indexed receiver,
+        address owner,
+        uint256 _pid
+    );
+
+    event MintVault(uint256 shares, address receiver, uint256 _pid);
+
+    event RedeemVault(
+        uint256 _amount,
+        address indexed receiver,
+        address owner,
+        uint256 _pid
+    );
+
     // create clones (minimal proxy eip 1167)
     // it deployes vaults using minimal proxy
     function createVault(
@@ -69,7 +85,7 @@ contract Factory is ReentrancyGuard {
         pid.increment();
         allVaults.push(clone);
 
-        emit VaultCreated(clone,address(_asset),name,symbol);
+        emit VaultCreated(clone, address(_asset), name, symbol);
 
         return clone;
     }
@@ -106,12 +122,12 @@ contract Factory is ReentrancyGuard {
         address receiver,
         address owner,
         uint256 _pid
-    ) public  {
-    
-    
-    IERC4626((address(getVault[_pid]))).withdraw(_amount, receiver, owner);
+    ) public {
+        require(_amount > 0, "amount is less than 0");
 
-        
+        IERC4626((address(getVault[_pid]))).withdraw(_amount, receiver, owner);
+
+        emit WithdrawVault(_amount,receiver,owner,_pid);
     }
 
     function mintVault(
@@ -119,6 +135,8 @@ contract Factory is ReentrancyGuard {
         address receiver,
         uint256 _pid
     ) public payable {
+        require(shares > 0, "amount is less than 0");
+
         uint256 assets = IERC4626((address(getVault[_pid]))).previewMint(
             shares
         );
@@ -130,27 +148,30 @@ contract Factory is ReentrancyGuard {
 
         ERC20(IERC4626(getVault[_pid]).asset()).approve(receiver, shares);
         ERC20(IERC4626(getVault[_pid]).asset()).approve(getVault[_pid], assets);
-       
-        
+
         // console.log(all);
         ERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
             msg.sender,
             address(this),
             assets
         );
-       
 
         IERC4626((address(getVault[_pid]))).mint(shares, receiver);
+
+        emit MintVault(shares,receiver,_pid);
     }
 
-
-
-function redeemVault(  uint256 _amount,
+    function redeemVault(
+        uint256 _amount,
         address receiver,
-        address owner,uint256 _pid) public {
+        address owner,
+        uint256 _pid
+    ) public {
+        require(_amount > 0, "amount is less than 0");
+        IERC4626((address(getVault[_pid]))).withdraw(_amount, receiver, owner);
 
-             IERC4626((address(getVault[_pid]))).withdraw(_amount, receiver, owner);
+        emit RedeemVault(_amount,receiver,owner,_pid);
+    }
 
-        }
     receive() external payable {}
 }
