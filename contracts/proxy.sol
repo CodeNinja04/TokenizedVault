@@ -2,28 +2,22 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-
-import {Vault} from "./ERC4626.sol";
 import {ERC20Lib} from "./utils/ERC20Lib.sol";
-
-import "./utils/IERC4626.sol";
-import "hardhat/console.sol";
+import {IERC4626} from "./utils/IERC4626.sol";
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
 import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
 contract Factory is ReentrancyGuard {
     using SafeERC20 for ERC20Lib;
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
     using Clones for address;
     using Counters for Counters.Counter;
-    using Address for address;
     Counters.Counter private pid;
 
     address public vaultImplementation;
@@ -68,10 +62,10 @@ contract Factory is ReentrancyGuard {
     // create clones (minimal proxy eip 1167)
     // it deployes vaults using minimal proxy
     function createVault(
-        ERC20 _asset,
+        IERC20 _asset,
         string memory name,
         string memory symbol
-    ) public returns (address clone) {
+    ) external nonReentrant returns (address clone) {
         bytes32 salt = keccak256(
             abi.encodePacked(_asset, name, symbol, msg.sender)
         );
@@ -95,24 +89,30 @@ contract Factory is ReentrancyGuard {
         uint256 _amount,
         address receiver,
         uint256 _pid
-    ) public payable {
+    ) external nonReentrant returns (uint256 shares) {
         require(_amount > 0, "amount is less than 0");
 
-        ERC20(IERC4626(getVault[_pid]).asset()).approve(receiver, _amount);
-        ERC20(IERC4626(getVault[_pid]).asset()).approve(
+        bool s1 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
+            receiver,
+            _amount
+        );
+        bool s2 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
             getVault[_pid],
             _amount
         );
 
-        ERC20(IERC4626(getVault[_pid]).asset()).approve(address(this), _amount);
+        bool s3 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
+            address(this),
+            _amount
+        );
 
-        ERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
+        bool s4 = IERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
             msg.sender,
             address(this),
             _amount
         ); // transfer asset from user to proxy
 
-        IERC4626((address(getVault[_pid]))).deposit(_amount, receiver); // trnasfer of asset from proxy to vault
+        shares = IERC4626((address(getVault[_pid]))).deposit(_amount, receiver); // trnasfer of asset from proxy to vault
 
         emit Depositvault(msg.sender, _pid, _amount);
     }
@@ -122,43 +122,48 @@ contract Factory is ReentrancyGuard {
         address receiver,
         address owner,
         uint256 _pid
-    ) public {
+    ) external nonReentrant returns (uint256 shares) {
         require(_amount > 0, "amount is less than 0");
 
-        IERC4626((address(getVault[_pid]))).withdraw(_amount, receiver, owner);
+        shares = IERC4626((address(getVault[_pid]))).withdraw(
+            _amount,
+            receiver,
+            owner
+        );
 
-        emit WithdrawVault(_amount,receiver,owner,_pid);
+        emit WithdrawVault(_amount, receiver, owner, _pid);
     }
 
     function mintVault(
         uint256 shares,
         address receiver,
         uint256 _pid
-    ) public payable {
+    ) external nonReentrant returns (uint256 _assets) {
         require(shares > 0, "amount is less than 0");
 
         uint256 assets = IERC4626((address(getVault[_pid]))).previewMint(
             shares
         );
 
-        console.log(
-            "mint",
-            IERC4626((address(getVault[_pid]))).previewMint(shares)
+        bool s1 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
+            receiver,
+            shares
+        );
+        bool s2 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
+            getVault[_pid],
+            assets
         );
 
-        ERC20(IERC4626(getVault[_pid]).asset()).approve(receiver, shares);
-        ERC20(IERC4626(getVault[_pid]).asset()).approve(getVault[_pid], assets);
-
-        // console.log(all);
-        ERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
+      
+        bool s3 = IERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
             msg.sender,
             address(this),
             assets
         );
 
-        IERC4626((address(getVault[_pid]))).mint(shares, receiver);
+        _assets = IERC4626((address(getVault[_pid]))).mint(shares, receiver);
 
-        emit MintVault(shares,receiver,_pid);
+        emit MintVault(shares, receiver, _pid);
     }
 
     function redeemVault(
@@ -166,11 +171,15 @@ contract Factory is ReentrancyGuard {
         address receiver,
         address owner,
         uint256 _pid
-    ) public {
+    ) external nonReentrant returns (uint256 shares) {
         require(_amount > 0, "amount is less than 0");
-        IERC4626((address(getVault[_pid]))).withdraw(_amount, receiver, owner);
+        shares = IERC4626((address(getVault[_pid]))).withdraw(
+            _amount,
+            receiver,
+            owner
+        );
 
-        emit RedeemVault(_amount,receiver,owner,_pid);
+        emit RedeemVault(_amount, receiver, owner, _pid);
     }
 
     receive() external payable {}

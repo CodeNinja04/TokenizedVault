@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.4;
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Lib} from "./utils/ERC20Lib.sol";
-import "hardhat/console.sol";
-
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
@@ -11,11 +9,11 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-// EIP-4626: Tokenized Vault Standard
+//EIP-4626: Tokenized Vault Standard
 
 contract Vault is ERC20Lib, ReentrancyGuard {
     using SafeERC20 for ERC20Lib;
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using FixedPointMathLib for uint256;
 
     event Deposit(
@@ -34,16 +32,17 @@ contract Vault is ERC20Lib, ReentrancyGuard {
     );
 
     // underlying token managed by the Vault
-    ERC20 public asset;
+    IERC20 public asset;
 
     // initialize function used in factory to set underlying asset token
-    function initialize(ERC20 _asset) public {
+    function initialize(IERC20 _asset) external {
         asset = _asset;
     }
 
     // deposit underlying asset to the contract and mint same shares as assets
     function deposit(uint256 assets, address receiver)
-        public
+        external
+        nonReentrant
         virtual
         returns (uint256 shares)
     {
@@ -63,16 +62,16 @@ contract Vault is ERC20Lib, ReentrancyGuard {
 
     // mint shares
     function mint(uint256 shares, address receiver)
-        public
+        external
+        nonReentrant
         virtual
         returns (uint256 assets)
     {
         assets = previewMint(shares);
         // No need to check for rounding error, previewMint rounds up.
-        console.log("previewMint(shares)", previewMint(shares));
-
+      
         // Need to transfer before minting or ERC777s could reenter.
-        IERC20(asset).approve(address(this), assets);
+        bool s1 = IERC20(asset).approve(address(this), assets);
         asset.safeTransferFrom(msg.sender, address(this), assets);
 
         _mint(receiver, shares);
@@ -87,7 +86,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
         uint256 assets,
         address receiver,
         address owner
-    ) public virtual returns (uint256 shares) {
+    ) external virtual returns (uint256 shares) {
         shares = previewWithdraw(assets); // No need to check for rounding error, previewWithdraw rounds up.
 
         if (msg.sender != owner) {
@@ -103,7 +102,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
 
-        asset.transfer(receiver, assets);
+        bool s1 = asset.transfer(receiver, assets);
     }
 
     // Burns exactly shares from owner and sends assets of underlying tokens to receiver.
@@ -128,7 +127,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
 
-        asset.transfer(receiver, assets);
+       bool s1 = asset.transfer(receiver, assets);
     }
 
     // amount of shares that the Vault would exchange for the amount of assets provided

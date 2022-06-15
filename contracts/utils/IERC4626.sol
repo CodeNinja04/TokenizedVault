@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -27,7 +27,7 @@ interface IERC4626 is IERC20, IERC20Metadata {
 
 
      function init(address owner_, string memory name_, string memory symbol_, uint256 totalSupply_) external ;
-     function initialize(ERC20 _asset) external; 
+     function initialize(IERC20 _asset) external; 
     /**
      * @dev Returns the address of the underlying token used for the Vault for accounting, depositing, and withdrawing.
      *
