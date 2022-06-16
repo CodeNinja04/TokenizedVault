@@ -42,8 +42,8 @@ contract Vault is ERC20Lib, ReentrancyGuard {
     // deposit underlying asset to the contract and mint same shares as assets
     function deposit(uint256 assets, address receiver)
         external
-        nonReentrant
         virtual
+        nonReentrant
         returns (uint256 shares)
     {
         // Check for rounding error since we round down in previewDeposit.
@@ -63,13 +63,13 @@ contract Vault is ERC20Lib, ReentrancyGuard {
     // mint shares
     function mint(uint256 shares, address receiver)
         external
-        nonReentrant
         virtual
+        nonReentrant
         returns (uint256 assets)
     {
         assets = previewMint(shares);
         // No need to check for rounding error, previewMint rounds up.
-      
+
         // Need to transfer before minting or ERC777s could reenter.
         bool s1 = IERC20(asset).approve(address(this), assets);
         asset.safeTransferFrom(msg.sender, address(this), assets);
@@ -127,7 +127,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
 
-       bool s1 = asset.transfer(receiver, assets);
+        bool s1 = asset.transfer(receiver, assets);
     }
 
     // amount of shares that the Vault would exchange for the amount of assets provided
@@ -160,7 +160,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
                 : shares.mulDivDown(asset.totalSupply(), supply);
     }
 
-    // Allows an on-chain or off-chain user to simulate the effects of their 
+    // Allows an on-chain or off-chain user to simulate the effects of their
     //deposit at the current block, given current on-chain conditions.
     function previewDeposit(uint256 assets)
         public
@@ -171,7 +171,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
         return convertToShares(assets);
     }
 
-    // Allows an on-chain or off-chain user to simulate the effects 
+    // Allows an on-chain or off-chain user to simulate the effects
     //of their mint at the current block, given current on-chain conditions.
 
     function previewMint(uint256 shares) public view virtual returns (uint256) {
@@ -181,7 +181,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
             supply == 0 ? shares : shares.mulDivUp(asset.totalSupply(), supply);
     }
 
-    // Allows an on-chain or off-chain user to simulate the effects of their withdrawal 
+    // Allows an on-chain or off-chain user to simulate the effects of their withdrawal
     //at the current block, given current on-chain conditions.
     function previewWithdraw(uint256 assets)
         public
@@ -195,7 +195,7 @@ contract Vault is ERC20Lib, ReentrancyGuard {
             supply == 0 ? assets : assets.mulDivUp(supply, asset.totalSupply());
     }
 
-    // Allows an on-chain or off-chain user to simulate the effects of their redeemption 
+    // Allows an on-chain or off-chain user to simulate the effects of their redeemption
     //at the current block, given current on-chain conditions.
     function previewRedeem(uint256 shares)
         public

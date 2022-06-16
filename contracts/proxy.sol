@@ -23,6 +23,7 @@ contract Factory is ReentrancyGuard {
     address public vaultImplementation;
 
     constructor(address _vaultImplementation) {
+        require(_vaultImplementation != address(0),"address is zero");
         vaultImplementation = _vaultImplementation;
     }
 
@@ -154,7 +155,6 @@ contract Factory is ReentrancyGuard {
             assets
         );
 
-      
         bool s3 = IERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
             msg.sender,
             address(this),
@@ -181,6 +181,4 @@ contract Factory is ReentrancyGuard {
 
         emit RedeemVault(_amount, receiver, owner, _pid);
     }
-
-    receive() external payable {}
 }
