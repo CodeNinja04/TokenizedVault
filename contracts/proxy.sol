@@ -10,12 +10,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
 contract Factory is ReentrancyGuard {
     using SafeERC20 for ERC20Lib;
     using SafeERC20 for IERC20;
-    using FixedPointMathLib for uint256;
     using Clones for address;
     using Counters for Counters.Counter;
     Counters.Counter private pid;
