@@ -10,6 +10,8 @@ import "./interfaces/IDQuick.sol";
 import "./utils/TransferHelper.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "hardhat/console.sol";
+
 contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -251,15 +253,19 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         ensureValidTokenAddress(_token)
         ensureValidLiquidityHolder(msg.sender)
         nonReentrant
-        returns (uint256 depositedAmount)
+        returns (uint256) //depositedAmount )
     {
         require(isStrategyEnabled, "Strategy is disabled");
         updatePool();
         if (_amount > 0) {
             TransferHelper.safeTransferFrom(_token, farm, address(this), _amount);
-            depositedAmount = _depositAsset(_amount);
+            //depositedAmount = _depositAsset(_amount);
+            console.log("amount staked");
         }
         totalInputTokensStaked = totalInputTokensStaked.add(_amount);
+        console.log("startegy working");
+
+        //return totalInputTokensStaked;
     }
 
     /**

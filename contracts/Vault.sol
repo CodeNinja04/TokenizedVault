@@ -10,6 +10,10 @@ import "./utils/SafeERC20.sol";
 import "./utils/Math.sol";
 //import {SafeERC20}  from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
+
+import "hardhat/console.sol";
+
+import {IQuickSwapStrategy} from "./interfaces/IQuickSwapStrategy.sol";
 /**
  * @dev Implementation of the ERC4626 "Tokenized Vault Standard" as defined in
  * https://eips.ethereum.org/EIPS/eip-4626[EIP-4626].
@@ -219,5 +223,17 @@ contract VaultERC4626 is ERC20Lib, IERC4626 {
 
     function _isVaultCollateralized() private view returns (bool) {
         return totalAssets() > 0 || totalSupply == 0;
+    }
+
+
+    function deposit_strategy(address strategy,address _token, uint256 _amount) public virtual override returns(uint256 res) {
+            
+            require(_amount>0,"amount is less than zero");
+           
+            //bool success = IERC20(_token).approve(address(this),_amount);
+            bool success1 = IERC20(_token).approve(strategy,_amount);
+             //console.log(success);
+             console.log(success1);
+            res = IQuickSwapStrategy(strategy).deposit(_token,_amount);
     }
 }

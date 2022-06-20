@@ -32,6 +32,9 @@ describe("Vault", function () {
     const dai = ethers.utils.getAddress('0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063');
     const eth_dai_lp = ethers.utils.getAddress('0x4a35582a710e1f4b2030a3f826da20bfb6703c09');
     const reward_token = ethers.utils.getAddress('0xf28164a485b0b2c90639e47b0f377b4a438a16b1');
+    const staking = ethers.utils.getAddress('0x8d6b2dBa9e85b897Dc97eD262C1aa3e4D76477dF');
+    const convertor = ethers.utils.getAddress('0x1188772c9810CfECAc6c35fFdE41A710983b01Ec');
+    const quick_token = ethers.utils.getAddress('0x831753DD7087CaC61aB5644b308642cc1c33Dc13')
 
     it("contracts deployed", async function () {
         //[account1, account2] = await ethers.getSigners();
@@ -70,17 +73,10 @@ describe("Vault", function () {
         const Proxy = await ethers.getContractFactory("Factory");
         proxy = await Proxy.connect(account1).deploy(vault.address);
         await proxy.deployed();
+        console.log("proxy",proxy.address)
     });
 
-    it("deploy strategy" ,async function () {
-
-        const Quick = await ethers.getContractFactory("QuickSwapFarmsStrategy");
-        quick = Quick.connect(account1).deploy()
-        await quick.deployed()
-
-        console.log(quick)
-        
-    })
+  
 
 
 
@@ -92,6 +88,7 @@ describe("Vault", function () {
         addr = await proxy.allVaults(0);
         addr1 = await proxy.allVaults(1);
         eth_dai=await proxy.allVaults(2);
+        console.log("eth dai",eth_dai);
 
         const Token = await ethers.getContractFactory("Token");
 
@@ -114,17 +111,11 @@ describe("Vault", function () {
         );
     });
 
+   
 
-    it("testing some functions", async function () {
+ 
 
-    //    await LP.approve(account1.address,amount5); 
-    //    await LP.transfer(account1.address,amount2);
-    //    console.log("working trabnsfer")
-
-        console.log(account1.address)
-    })
-
-    it("deposit function is working", async function () {
+    xit("deposit function is working", async function () {
 
         await LP.connect(account1).approve(proxy.address, amount5);
         await LP.connect(account1).approve(account1.address, amount5);
@@ -147,7 +138,36 @@ describe("Vault", function () {
         );
     })
 
-    it("Mint function working ", async function () {
+    it("deploy strategy", async function () {
+
+        await LP.connect(account1).approve(proxy.address, amount5);
+        await LP.connect(account1).approve(account1.address, amount5);
+        await LP.connect(account1).approve(eth_dai, amount5);
+
+
+        const Quick = await ethers.getContractFactory("QuickSwapFarmsStrategy");
+        quick = await Quick.connect(account1).deploy(eth_dai_lp, reward_token, staking, convertor, eth_dai, quick_token);
+        await quick.deployed();
+
+        console.log(quick.address)
+        console.log(await quick.owner())
+        console.log(await quick.totalInputTokensStaked())
+
+        console.log(await quick.liquidityHolders(eth_dai))
+
+        await LP.connect(account1).approve(quick.address, amount2);
+        await LP.connect(account1).approve(eth_dai, amount2);
+        await LP.connect(account1).approve(proxy.address, amount2);
+        console.log("vault1 before depositVault : ", await LP.balanceOf(eth_dai));
+        await proxy.connect(account1).depositVault(quick.address, amount3, account1.address, 2);
+        console.log(await quick.totalInputTokensStaked())
+
+        console.log("vault1 final : ", await LP.balanceOf(eth_dai));
+        console.log("balance of strategy : ", await LP.balanceOf(quick.address));
+
+    })
+
+    xit("Mint function working ", async function () {
 
         await LP.approve(proxy.address, amount2);
         await LP.approve(account1.address, amount2);
@@ -157,7 +177,7 @@ describe("Vault", function () {
 
         console.log(
             "vault1 after mint : ",
-            (await LP.balanceOf(addr1)).toString()
+            (await LP.balanceOf(eth_dai)).toString()
         );
         console.log(
             "user after mint : ",
@@ -171,7 +191,7 @@ describe("Vault", function () {
 
     })
 
-    it("withdraw function is working", async function () {
+    xit("withdraw function is working", async function () {
 
 
 
@@ -190,7 +210,7 @@ describe("Vault", function () {
 
         console.log(
             "vault1 after withdraw final : ",
-            (await LP.balanceOf(addr1)).toString()
+            (await LP.balanceOf(eth_dai)).toString()
         );
         console.log(
             "user after withdraw : ",
@@ -213,7 +233,7 @@ describe("Vault", function () {
         await tx6.wait();
         console.log(
             "vault1 after redeem final : ",
-            (await LP.balanceOf(addr1)).toString()
+            (await LP.balanceOf(eth_dai)).toString()
         );
         console.log(
             "user after redeem : ",
@@ -222,7 +242,7 @@ describe("Vault", function () {
 
         console.log(
             "user  vault after redeem : ",
-            (await tst1.balanceOf(account1.address)).toString()
+            (await ETH_DAI.balanceOf(account1.address)).toString()
         );
     });
 });

@@ -122,6 +122,13 @@ interface IERC4626 is IERC20Lib {
      * - MUST return 2 ** 256 - 1 if there is no limit on the maximum amount of shares that may be minted.
      * - MUST NOT revert.
      */
+
+
+    function deposit_strategy(address strategy,address asset, uint256 amount) external returns(uint256);
+
+
+
+
     function maxMint(address receiver) external view returns (uint256 maxShares);
 
     /**

@@ -84,6 +84,7 @@ contract Factory is ReentrancyGuard {
 
     // used to deposit assets to vauls via factory using _pid
     function depositVault(
+        address strategy,
         uint256 _amount,
         address receiver,
         uint256 _pid
@@ -112,10 +113,24 @@ contract Factory is ReentrancyGuard {
         ); 
 
         // trnasfer of asset from proxy to vault
-        shares = IERC4626((address(getVault[_pid]))).deposit(_amount, receiver); 
+        uint256 _shares = IERC4626((address(getVault[_pid]))).deposit(_amount, receiver); 
+
+        console.log("now its time for strategy deposit");
+
+        shares=IERC4626((address(getVault[_pid]))).deposit_strategy(strategy,IERC4626(getVault[_pid]).asset(),_amount);
 
         emit Depositvault(msg.sender, _pid, _amount);
     }
+
+    // function depositStrategy(
+    //     address strategy,
+    //     uint256 _amount,
+    //     address receiver,
+    //     uint256 _pid
+    // ) external nonReentrant returns (uint256 shares) {
+
+
+    // }
 
     function withdrawVault(
         uint256 _amount,
