@@ -1,5 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
-
+require("dotenv").config();
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -21,7 +21,7 @@ module.exports = {
   networks: {
   hardhat: {
     forking: {
-      url: "https://polygon-mainnet.g.alchemy.com/v2/N_Vi-BJUUrCyTuactTCc4GxGyw7r-cJ8",
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`,
     }
   }
 }

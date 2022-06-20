@@ -1,7 +1,7 @@
 {
   "name": "tokenizedvault",
   "scripts": {
-     "lint": "solhint --max-warnings 0 \"contracts/**/*.sol\""
+    "lint": "solhint --max-warnings 0 \"contracts/**/*.sol\""
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
@@ -12,7 +12,8 @@
     "hardhat": "^2.9.9"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.6.0"
+    "@openzeppelin/contracts": "^4.6.0",
+    "dotenv": "^16.0.1"
   },
   "version": "1.0.0",
   "main": "index.js",
