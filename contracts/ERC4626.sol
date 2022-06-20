@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.4;
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "./interfaces/IERC20.sol";
 import {ERC20Lib} from "./utils/ERC20Lib.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./utils/SafeERC20.sol";
 import {FixedPointMathLib} from "./utils/FixedPointMathLib.sol";
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -230,5 +230,10 @@ contract Vault is ERC20Lib, ReentrancyGuard {
 
     receive() external payable {}
 
-    // function earn() public {  }
+
+    // function earn() public {  } call strategy --> autocompund  
+    //(lptoken --> deposit --> farmtoken(claim if not)--> (farmtoken to lp convert)  )
+    //if farmtoken--> is not any of the given token  divide by 2  (swap eth/btc)
+    // else singlesidedliq --> call --> lp 
+    // deposit lp
 }

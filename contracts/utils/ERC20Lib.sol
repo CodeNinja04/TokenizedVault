@@ -3,17 +3,19 @@ pragma solidity ^0.8.4;
 
 //import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+//import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/IERC20Lib.sol";
 
-contract ERC20Lib is IERC20 {
+import "hardhat/console.sol";
+ contract ERC20Lib is IERC20Lib {
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) public _allowances;
 
-    uint256 public override totalSupply;
+    uint256 public  totalSupply;
 
     string public name;
     string public symbol;
-    uint8 public decimals;
+    uint8 public decimal;
 
     bool public initialized = false;
 
@@ -26,11 +28,11 @@ contract ERC20Lib is IERC20 {
         string memory name_,
         string memory symbol_,
         uint256 totalSupply_
-    ) public {
+    ) public override  {
         require(initialized == false, "Contract already initialized");
         name = name_;
         symbol = symbol_;
-        decimals = 18;
+        decimal = 18;
         _balances[owner_] = totalSupply_;
         totalSupply = totalSupply_;
 
@@ -40,6 +42,10 @@ contract ERC20Lib is IERC20 {
     function balanceOf(address account) public view override returns (uint256) {
         return _balances[account];
     }
+
+    // function decimals() public  returns(uint8){
+    //     return decimal;
+    // }
 
     function allowance(address owner, address spender)
         public
@@ -80,10 +86,13 @@ contract ERC20Lib is IERC20 {
         uint256 amount
     ) internal virtual {
         uint256 currentAllowance = allowance(owner, spender);
-        if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= amount, "ERC20: insufficient allowance");
+        if (currentAllowance  != type(uint256).max) {
+            console.log(_allowances[owner][spender]>amount);
+            console.log(amount);
+            console.log(currentAllowance);
+            //require(currentAllowance-amount>0, "ERC20: insufficient allowance");
             unchecked {
-                _approve(owner, spender, currentAllowance - amount);
+                _approve(owner, spender, _allowances[owner][spender] - amount);
             }
         }
     }
