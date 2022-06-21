@@ -4,7 +4,7 @@ const provider = waffle.provider;
 
 const toWei = (value) => ethers.utils.parseEther(value.toString());
 
-describe("Vault", function () {
+describe("Strategy", function () {
     var account1;
     var account2;
     var proxy;
@@ -28,6 +28,7 @@ describe("Vault", function () {
     const amount4 = ethers.utils.parseEther("50");
     const amount5 = ethers.utils.parseEther("8");
     const acc = ethers.utils.getAddress("0x8d6b2dba9e85b897dc97ed262c1aa3e4d76477df")
+
     const weth = ethers.utils.getAddress('0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619');
     const dai = ethers.utils.getAddress('0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063');
     const eth_dai_lp = ethers.utils.getAddress('0x4a35582a710e1f4b2030a3f826da20bfb6703c09');
@@ -57,8 +58,8 @@ describe("Vault", function () {
 
         WETH = Token.attach(weth);
         DAI = Token.attach(dai);
-        LP=Token.attach(eth_dai_lp);
-        
+        LP = Token.attach(eth_dai_lp);
+
         token = await Token.connect(account1).deploy("token0", "TKN0", toWei(10000));
         await token.deployed();
 
@@ -73,22 +74,22 @@ describe("Vault", function () {
         const Proxy = await ethers.getContractFactory("Factory");
         proxy = await Proxy.connect(account1).deploy(vault.address);
         await proxy.deployed();
-        console.log("proxy",proxy.address)
+        console.log("proxy", proxy.address)
     });
 
-  
+
 
 
 
     it("vaults created", async function () {
         const tx = await proxy.connect(account1).createVault(token.address, "test", "TSTKN");
         const tx1 = await proxy.connect(account1).createVault(token1.address, "test1", "TSTKN1");
-        await proxy.connect(account1).createVault(eth_dai_lp,"ETH-DAI-VAULT","TKNETHDAI");
+        await proxy.connect(account1).createVault(eth_dai_lp, "ETH-DAI-VAULT", "TKNETHDAI");
 
         addr = await proxy.allVaults(0);
         addr1 = await proxy.allVaults(1);
-        eth_dai=await proxy.allVaults(2);
-        console.log("eth dai",eth_dai);
+        eth_dai = await proxy.allVaults(2);
+        console.log("eth dai", eth_dai);
 
         const Token = await ethers.getContractFactory("Token");
 
@@ -98,7 +99,7 @@ describe("Vault", function () {
         const ERC20Lib = await ethers.getContractFactory("VaultERC4626");
         tst = ERC20Lib.attach(addr);
         tst1 = ERC20Lib.attach(addr1);
-        ETH_DAI=ERC20Lib.attach(eth_dai);
+        ETH_DAI = ERC20Lib.attach(eth_dai);
 
         await token1.approve(proxy.address, amount3);
 
@@ -111,9 +112,9 @@ describe("Vault", function () {
         );
     });
 
-   
 
- 
+
+
 
     xit("deposit function is working", async function () {
 
@@ -138,42 +139,57 @@ describe("Vault", function () {
         );
     })
 
-    it("deploy strategy", async function () {
+    it("deploy strategy and check deposit function", async function () {
 
-        await LP.connect(account1).approve(proxy.address, amount5);
-        await LP.connect(account1).approve(account1.address, amount5);
-        await LP.connect(account1).approve(eth_dai, amount5);
+        // await LP.connect(account1).approve(proxy.address, amount5);
+        // await LP.connect(account1).approve(account1.address, amount5);
+        // await LP.connect(account1).approve(eth_dai, amount5);
 
 
         const Quick = await ethers.getContractFactory("QuickSwapFarmsStrategy");
         quick = await Quick.connect(account1).deploy(eth_dai_lp, reward_token, staking, convertor, eth_dai, quick_token);
         await quick.deployed();
 
-        console.log(quick.address)
-        console.log(await quick.owner())
-        console.log(await quick.totalInputTokensStaked())
+        // console.log(quick.address)
+        // console.log(await quick.owner())
+        // console.log(await quick.totalInputTokensStaked())
 
-        console.log(await quick.liquidityHolders(eth_dai))
+        // console.log(await quick.liquidityHolders(eth_dai))
 
         await LP.connect(account1).approve(quick.address, amount2);
         await LP.connect(account1).approve(eth_dai, amount2);
         await LP.connect(account1).approve(proxy.address, amount2);
-        console.log("vault1 before depositVault : ", await LP.balanceOf(eth_dai));
-        await proxy.connect(account1).depositVault(quick.address, amount3, account1.address, 2);
+        console.log("user before depositVault : ", await LP.balanceOf(account1.address));
+        await proxy.connect(account1).depositVault(quick.address, amount2, account1.address, 2);
         console.log(await quick.totalInputTokensStaked())
 
-        console.log("vault1 final : ", await LP.balanceOf(eth_dai));
+        // console.log("vault1 final : ", await LP.balanceOf(eth_dai));
         console.log("balance of strategy : ", await LP.balanceOf(quick.address));
+
+
+        console.log(
+            "vault1 after deposit final : ",
+            (await LP.balanceOf(eth_dai)).toString()
+        );
+        console.log(
+            "user after deposit : ",
+            (await LP.balanceOf(account1.address)).toString()
+        );
+
+        console.log(
+            "user vault  tokens after deposit : ",
+            (await ETH_DAI.balanceOf(account1.address)).toString()
+        );
 
     })
 
-    xit("Mint function working ", async function () {
+    it("Mint function working ", async function () {
 
-        await LP.approve(proxy.address, amount2);
-        await LP.approve(account1.address, amount2);
-        await LP.approve(eth_dai, amount2);
+        await LP.connect(account1).approve(quick.address, amount2);
+        await LP.connect(account1).approve(eth_dai, amount2);
+        await LP.connect(account1).approve(proxy.address, amount2);
 
-        const tx4 = await proxy.mintVault(amount2, account1.address, 2);
+        const tx4 = await proxy.mintVault(amount3, account1.address, 2);
 
         console.log(
             "vault1 after mint : ",
@@ -191,7 +207,7 @@ describe("Vault", function () {
 
     })
 
-    xit("withdraw function is working", async function () {
+    it("withdraw function is working", async function () {
 
 
 
@@ -201,8 +217,9 @@ describe("Vault", function () {
         );
 
 
-        const tx5 = await proxy.withdrawVault(
-            amount2,
+        await proxy.withdrawVault(
+            quick.address,
+            amount3,
             account1.address,
             account1.address,
             2
@@ -221,11 +238,13 @@ describe("Vault", function () {
             "user  vault after withdraw : ",
             (await ETH_DAI.balanceOf(account1.address)).toString()
         );
+
+        console.log("balance of strategy : ", await LP.balanceOf(quick.address));
     })
 
-    xit("redeem function working", async function () {
+    it("redeem function working", async function () {
         const tx6 = await proxy.redeemVault(
-            amount2,
+            amount3,
             account1.address,
             account1.address,
             2

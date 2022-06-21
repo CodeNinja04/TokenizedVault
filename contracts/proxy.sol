@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
-
 contract Factory is ReentrancyGuard {
     using SafeERC20 for IERC20;
     using Clones for address;
@@ -20,7 +19,7 @@ contract Factory is ReentrancyGuard {
     address public vaultImplementation;
 
     constructor(address _vaultImplementation) {
-        require(_vaultImplementation != address(0),"address is zero");
+        require(_vaultImplementation != address(0), "address is zero");
         vaultImplementation = _vaultImplementation;
     }
 
@@ -70,7 +69,7 @@ contract Factory is ReentrancyGuard {
 
         clone = Clones.cloneDeterministic(vaultImplementation, salt);
 
-        IERC4626(clone).init(msg.sender, name, symbol,0);
+        IERC4626(clone).init(msg.sender, name, symbol, 0);
         IERC4626(clone).initialize(asset);
 
         getVault[pid.current()] = clone;
@@ -105,34 +104,25 @@ contract Factory is ReentrancyGuard {
             _amount
         );
         // transfer asset from user to proxy
-        
+
         bool s4 = IERC20(IERC4626(getVault[_pid]).asset()).transferFrom(
             msg.sender,
             address(this),
             _amount
-        ); 
+        );
 
         // trnasfer of asset from proxy to vault
-        uint256 _shares = IERC4626((address(getVault[_pid]))).deposit(_amount, receiver); 
-
-        console.log("now its time for strategy deposit");
-
-        shares=IERC4626((address(getVault[_pid]))).deposit_strategy(strategy,IERC4626(getVault[_pid]).asset(),_amount);
+        uint256 _shares = IERC4626((address(getVault[_pid]))).deposit(
+            strategy,
+            _amount,
+            receiver
+        );
 
         emit Depositvault(msg.sender, _pid, _amount);
     }
 
-    // function depositStrategy(
-    //     address strategy,
-    //     uint256 _amount,
-    //     address receiver,
-    //     uint256 _pid
-    // ) external nonReentrant returns (uint256 shares) {
-
-
-    // }
-
     function withdrawVault(
+        address strategy,
         uint256 _amount,
         address receiver,
         address owner,
@@ -140,21 +130,15 @@ contract Factory is ReentrancyGuard {
     ) external nonReentrant returns (uint256 shares) {
         require(_amount > 0, "amount is less than 0");
 
-        //  bool s1 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
-        //     receiver,
-        //     _amount
-        // );
-        // bool s2 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
-        //     getVault[_pid],
-        //     _amount
-        // );
+        shares = IERC4626((address(getVault[_pid]))).withdraw_strategy(
+            strategy,
+            IERC4626(getVault[_pid]).asset(),
+            _amount
+        );
 
-        // bool s3 = IERC20(IERC4626(getVault[_pid]).asset()).approve(
-        //     address(this),
-        //     _amount
-        // );
+        console.log("withdraw initial");
 
-        shares = IERC4626((address(getVault[_pid]))).withdraw(
+        uint256 _shares = IERC4626((address(getVault[_pid]))).withdraw(
             _amount,
             receiver,
             owner
@@ -209,9 +193,4 @@ contract Factory is ReentrancyGuard {
 
         emit RedeemVault(_amount, receiver, owner, _pid);
     }
-
-
-    
-
-
 }

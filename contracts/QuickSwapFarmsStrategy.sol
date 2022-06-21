@@ -104,7 +104,10 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
      * @param _supportsEmergencyWithdraw bool flag to enable disable if protocol supports emergency withdraw
      * @dev Only owner can call and update this
      */
-    function updateSupportsEmergencyWithdraw(bool _supportsEmergencyWithdraw) external onlyOwner {
+    function updateSupportsEmergencyWithdraw(bool _supportsEmergencyWithdraw)
+        external
+        onlyOwner
+    {
         supportsEmergencyWithdraw = _supportsEmergencyWithdraw;
     }
 
@@ -113,7 +116,11 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
      * @param _farm Address of the farm
      * @dev Only owner can call and update the farm address
      */
-    function updateFarmAddress(address _farm) external onlyOwner ensureNonZeroAddress(_farm) {
+    function updateFarmAddress(address _farm)
+        external
+        onlyOwner
+        ensureNonZeroAddress(_farm)
+    {
         liquidityHolders[farm] = false;
         farm = _farm;
         liquidityHolders[farm] = true;
@@ -124,7 +131,9 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
      * @param _stakingRewardsContract Address of the Staking Contract
      * @dev Only owner can call and update the Staking Contract address
      */
-    function updateQuickSwapStakingRewardsContract(IStakingRewards _stakingRewardsContract)
+    function updateQuickSwapStakingRewardsContract(
+        IStakingRewards _stakingRewardsContract
+    )
         external
         onlyOwner
         ensureNonZeroAddress(address(_stakingRewardsContract))
@@ -137,7 +146,11 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
      * @param _asset Address of the QuickSwap LP
      * @dev Only owner can call and update the QuickSwap LP address
      */
-    function updateAsset(IERC20 _asset) external onlyOwner ensureNonZeroAddress(address(_asset)) {
+    function updateAsset(IERC20 _asset)
+        external
+        onlyOwner
+        ensureNonZeroAddress(address(_asset))
+    {
         asset = _asset;
     }
 
@@ -187,7 +200,11 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
 
         uint256 quickTokenAmount = quickTokenAddress.balanceOf(address(this));
 
-        TransferHelper.safeTransfer(address(quickTokenAddress), ygnConverter, quickTokenAmount);
+        TransferHelper.safeTransfer(
+            address(quickTokenAddress),
+            ygnConverter,
+            quickTokenAmount
+        );
     }
 
     /**
@@ -214,7 +231,11 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
     /**
      * @notice View function to see pending rewards on frontend.
      */
-    function getPendingRewards() external view returns (uint256 pendingRewards) {
+    function getPendingRewards()
+        external
+        view
+        returns (uint256 pendingRewards)
+    {
         pendingRewards = getStakingRewards();
     }
 
@@ -239,7 +260,11 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         IDQuick(address(rewardToken)).leave(rewardTokenRewards);
 
         uint256 quickTokenAmount = quickTokenAddress.balanceOf(address(this));
-        TransferHelper.safeTransfer(address(quickTokenAddress), ygnConverter, quickTokenAmount);
+        TransferHelper.safeTransfer(
+            address(quickTokenAddress),
+            ygnConverter,
+            quickTokenAmount
+        );
     }
 
     /**
@@ -253,17 +278,20 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         ensureValidTokenAddress(_token)
         ensureValidLiquidityHolder(msg.sender)
         nonReentrant
-        returns (uint256) //depositedAmount )
+        returns (uint256 depositedAmount)
     {
         require(isStrategyEnabled, "Strategy is disabled");
         updatePool();
         if (_amount > 0) {
-            TransferHelper.safeTransferFrom(_token, farm, address(this), _amount);
-            //depositedAmount = _depositAsset(_amount);
-            console.log("amount staked");
+            TransferHelper.safeTransferFrom(
+                _token,
+                farm,
+                address(this),
+                _amount
+            );
+            depositedAmount = _depositAsset(_amount);
         }
         totalInputTokensStaked = totalInputTokensStaked.add(_amount);
-        console.log("startegy working");
 
         //return totalInputTokensStaked;
     }
@@ -271,7 +299,10 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
     /**
      * @dev function to deposit asset from strategy to Quickswap Staking Contract.
      */
-    function _depositAsset(uint256 _amount) internal returns (uint256 lpReceived) {
+    function _depositAsset(uint256 _amount)
+        internal
+        returns (uint256 lpReceived)
+    {
         asset.safeApprove(address(stakingRewardsContract), _amount);
         stakingRewardsContract.stake(_amount);
         lpReceived = _amount;
@@ -297,6 +328,7 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
             } else {
                 withdrawnAmount = _getWithdrawableAmount(_amount);
             }
+
             IERC20(_token).safeApprove(address(msg.sender), withdrawnAmount);
         }
         totalInputTokensStaked = totalInputTokensStaked.sub(_amount);
@@ -305,7 +337,10 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
     /**
      * @dev function to withdraw asset from Quickswap Stakign Contract to strategy
      */
-    function _withdrawAsset(uint256 _lpAmountToWithdraw) internal returns (uint256 assetWithdrawn) {
+    function _withdrawAsset(uint256 _lpAmountToWithdraw)
+        internal
+        returns (uint256 assetWithdrawn)
+    {
         stakingRewardsContract.withdraw(_lpAmountToWithdraw);
         assetWithdrawn = _lpAmountToWithdraw;
     }
@@ -352,6 +387,8 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         uint256 totalAmount = totalBalance >= totalInputTokensStaked
             ? totalInputTokensStaked
             : totalBalance;
-        withdrawableAmount = _amount.mul(totalAmount).div(totalInputTokensStaked);
+        withdrawableAmount = _amount.mul(totalAmount).div(
+            totalInputTokensStaked
+        );
     }
 }
