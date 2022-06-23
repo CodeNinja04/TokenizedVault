@@ -56,6 +56,10 @@ contract Factory is ReentrancyGuard {
         uint256 _pid
     );
 
+
+    // earn function that calls earn function of vault which calls updatepool of strategy
+
+
     // create clones (minimal proxy eip 1167)
     // it deployes vaults using minimal proxy
     function createVault(

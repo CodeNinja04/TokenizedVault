@@ -172,13 +172,19 @@ contract VaultERC4626 is ERC20Lib, IERC4626 {
             "ERC4626: deposit more than max"
         );
 
+        //updatepool 
+        res = IQuickSwapStrategy(strategy).deposit(address(_asset), assets);
+
         uint256 shares = previewDeposit(assets);
 
         _deposit(msg.sender, receiver, assets, shares);
 
         bool success1 = IERC20(_asset).approve(strategy, assets);
 
-        res = IQuickSwapStrategy(strategy).deposit(address(_asset), assets);
+        //res = IQuickSwapStrategy(strategy).deposit(address(_asset), assets);
+
+
+
     }
 
     /** @dev See {IERC4262-mint} */
@@ -355,4 +361,9 @@ contract VaultERC4626 is ERC20Lib, IERC4626 {
 
         IERC20(_token).transferFrom(strategy, address(this), _amount);
     }
+
+
+    // earn --> updatepool 
+
+
 }

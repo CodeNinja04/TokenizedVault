@@ -10,6 +10,7 @@ import "./interfaces/IDQuick.sol";
 import "./utils/TransferHelper.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "./interfaces/IUniversalOneSidedFarm.sol";
 import "hardhat/console.sol";
 
 contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
@@ -23,6 +24,8 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
     IStakingRewards public stakingRewardsContract; //StakingRewards contract of QuickSwap
     address public ygnConverter; // YGN Converter address
     address public farm; //Farm Address
+    IUniversalOneSidedFarm public oneSidedFarm;
+    address weth = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
 
     uint256 public strategyWithdrawalFeeBP = 0;
     uint256 public strategyDepositFeeBP = 0;
@@ -70,7 +73,8 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         IStakingRewards _stakingRewardsContract,
         address _ygnConverter,
         address _farm,
-        IERC20 _quickTokenAddress
+        IERC20 _quickTokenAddress,
+        IUniversalOneSidedFarm onesidedfarm
     ) {
         asset = _asset;
         rewardToken = _rewardToken;
@@ -79,6 +83,7 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         farm = _farm;
         quickTokenAddress = _quickTokenAddress;
         liquidityHolders[_farm] = true;
+        oneSidedFarm = onesidedfarm;
     }
 
     function updateLiquidityHolder(address _liquidityHolder, bool _status)
@@ -225,7 +230,7 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
      * @dev function to claim dQUICK rewards
      */
     function _claimRewards() internal {
-        stakingRewardsContract.getReward();
+        stakingRewardsContract.getReward(); // to startegy
     }
 
     /**
@@ -249,23 +254,54 @@ contract QuickSwapFarmsStrategy is Ownable, ReentrancyGuard {
         }
 
         uint256 pendingRewards = getStakingRewards();
+        console.log("pending rewards", pendingRewards);
         if (pendingRewards > 0) {
             _claimRewards();
         } else {
             // when no rewards are present
             return;
-        }
+        } // rewards in dquick
+
         uint256 rewardTokenRewards = rewardToken.balanceOf(address(this));
 
         IDQuick(address(rewardToken)).leave(rewardTokenRewards);
 
-        uint256 quickTokenAmount = quickTokenAddress.balanceOf(address(this));
-        TransferHelper.safeTransfer(
+        uint256 quickTokenAmount = quickTokenAddress.balanceOf(address(this)); // rewards in quick in strategy
+        console.log(quickTokenAmount);
+
+        TransferHelper.safeApprove(
             address(quickTokenAddress),
-            ygnConverter,
+            address(oneSidedFarm),
             quickTokenAmount
         );
+
+        uint256 addedLiquidity = IUniversalOneSidedFarm(oneSidedFarm)
+            .poolLiquidity(
+                address(this),
+                address(quickTokenAddress), // quick
+                quickTokenAmount, // quick amt
+                address(asset), // eth-dai-lp
+                weth, // any token from pair
+                1 // set to 1 wei
+            );
+
+        console.log(addedLiquidity);
+
+        // now convert quick to lp
+
+        // TransferHelper.safeTransfer(
+        //     address(quickTokenAddress),
+        //     ygnConverter,
+        //     quickTokenAmount
+        // );
+       // earn();
     }
+
+    // function earn() public {
+
+    // uint256 quickTokenAmount = quickTokenAddress.balanceOf(address(this));
+
+    // }
 
     /**
      * @notice function to deposit asset to quickswap farms.

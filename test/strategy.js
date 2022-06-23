@@ -19,6 +19,7 @@ describe("Strategy", function () {
     var DAI;
     var WETH;
     var LP;
+    var QK;
     var Reward_Token;
     var quick;
 
@@ -27,7 +28,7 @@ describe("Strategy", function () {
     const amount3 = ethers.utils.parseEther("1");
     const amount4 = ethers.utils.parseEther("50");
     const amount5 = ethers.utils.parseEther("8");
-    const acc = ethers.utils.getAddress("0x8d6b2dba9e85b897dc97ed262c1aa3e4d76477df")
+    const acc = ethers.utils.getAddress("0x3889a2be6f26193681834fe4b65790f5104fd730")
 
     const weth = ethers.utils.getAddress('0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619');
     const dai = ethers.utils.getAddress('0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063');
@@ -35,7 +36,8 @@ describe("Strategy", function () {
     const reward_token = ethers.utils.getAddress('0xf28164a485b0b2c90639e47b0f377b4a438a16b1');
     const staking = ethers.utils.getAddress('0x8d6b2dBa9e85b897Dc97eD262C1aa3e4D76477dF');
     const convertor = ethers.utils.getAddress('0x1188772c9810CfECAc6c35fFdE41A710983b01Ec');
-    const quick_token = ethers.utils.getAddress('0x831753DD7087CaC61aB5644b308642cc1c33Dc13')
+    const quick_token = ethers.utils.getAddress('0x831753DD7087CaC61aB5644b308642cc1c33Dc13');
+    const oneSidedFarm = ethers.utils.getAddress('0x2E4aE5adeC4A31aFbdb9CcE96255a77A7875c252');
 
     it("contracts deployed", async function () {
         //[account1, account2] = await ethers.getSigners();
@@ -59,6 +61,7 @@ describe("Strategy", function () {
         WETH = Token.attach(weth);
         DAI = Token.attach(dai);
         LP = Token.attach(eth_dai_lp);
+        QK = Token.attach(reward_token);
 
         token = await Token.connect(account1).deploy("token0", "TKN0", toWei(10000));
         await token.deployed();
@@ -141,13 +144,15 @@ describe("Strategy", function () {
 
     it("deploy strategy and check deposit function", async function () {
 
+        console.log("Quick user initial", await QK.balanceOf(account1.address));
+
         // await LP.connect(account1).approve(proxy.address, amount5);
         // await LP.connect(account1).approve(account1.address, amount5);
         // await LP.connect(account1).approve(eth_dai, amount5);
 
 
         const Quick = await ethers.getContractFactory("QuickSwapFarmsStrategy");
-        quick = await Quick.connect(account1).deploy(eth_dai_lp, reward_token, staking, convertor, eth_dai, quick_token);
+        quick = await Quick.connect(account1).deploy(eth_dai_lp, reward_token, staking, convertor, eth_dai, quick_token, oneSidedFarm);
         await quick.deployed();
 
         // console.log(quick.address)
@@ -180,10 +185,19 @@ describe("Strategy", function () {
             "user vault  tokens after deposit : ",
             (await ETH_DAI.balanceOf(account1.address)).toString()
         );
+        
+        console.log("strategy before updatepool : ", await LP.balanceOf(quick.address));
+
+        await quick.connect(account1).updatePool()
+
+        console.log("strategy after updatepool : ", await LP.balanceOf(quick.address));
+
+        console.log("Quick user",await QK.balanceOf(account1.address));
+        
 
     })
 
-    it("Mint function working ", async function () {
+    xit("Mint function working ", async function () {
 
         await LP.connect(account1).approve(quick.address, amount2);
         await LP.connect(account1).approve(eth_dai, amount2);
@@ -207,7 +221,7 @@ describe("Strategy", function () {
 
     })
 
-    it("withdraw function is working", async function () {
+    xit("withdraw function is working", async function () {
 
 
 
@@ -242,7 +256,7 @@ describe("Strategy", function () {
         console.log("balance of strategy : ", await LP.balanceOf(quick.address));
     })
 
-    it("redeem function working", async function () {
+    xit("redeem function working", async function () {
         const tx6 = await proxy.redeemVault(
             amount3,
             account1.address,
